@@ -26,6 +26,7 @@ header button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .shp.sq{border-radius:5px}
 .fl{position:absolute;top:calc(var(--ps,26px) + 3px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:13px;line-height:1.2;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1px 4px;pointer-events:none}
 .me{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#2563eb;border:4px solid #fff;box-shadow:0 0 0 2px #2563eb,0 2px 8px #0008;z-index:4;animation:pl 1.8s ease-out infinite}
+#map.so .me{animation:none}
 @keyframes pl{0%{box-shadow:0 0 0 2px #2563eb,0 0 0 0 #2563eb99,0 2px 8px #0008}100%{box-shadow:0 0 0 2px #2563eb,0 0 0 26px #2563eb00,0 2px 8px #0008}}
 .ring{position:absolute;border-radius:50%;background:#2563eb1f;border:1px solid #2563eb66;pointer-events:none;z-index:1}
 #zb{position:absolute;right:10px;bottom:104px;display:flex;flex-direction:column;align-items:stretch;gap:4px;z-index:5}
@@ -320,7 +321,7 @@ const urGo=d=>{const k=HI+d;if(k<0||k>=HS.length)return;HI=k;S=JSON.parse(HS[HI]
 $("ur").onclick=()=>urGo(-1);$("rd2").onclick=()=>urGo(1);
 HS=[JSON.stringify(S)];HI=0;urUp();
 var hpush=false,hskip=0;
-function syncBack(){try{const o=sheet.style.display=="block"||ddOpen;if(o&&!hpush){history.pushState({o:1},"");hpush=true}else if(!o&&hpush){hpush=false;hskip++;history.back()}}catch(e){}}
+function syncBack(){try{map.classList.toggle("so",sheet.style.display=="block");const o=sheet.style.display=="block"||ddOpen;if(o&&!hpush){history.pushState({o:1},"");hpush=true}else if(!o&&hpush){hpush=false;hskip++;history.back()}}catch(e){}}
 if(typeof MutationObserver!="undefined")new MutationObserver(syncBack).observe(sheet,{attributes:true,attributeFilter:["style"]});
 addEventListener("popstate",()=>{if(hskip>0){hskip--;return}hpush=false;
  if(sheet.style.display=="block"){if(roomSel&&sel){roomSel=null;open()}else if($("cl"))$("cl").click();else{sheet.style.display="none";sel=null;draw()}}
