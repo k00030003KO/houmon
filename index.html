@@ -11,6 +11,8 @@ header{position:relative;z-index:6;display:flex;gap:6px;padding:6px 8px;border-b
 header button{flex:1;padding:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 header button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #map{flex:1;position:relative;overflow:hidden;touch-action:none;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px}
+#map{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.pin.drag{filter:drop-shadow(0 6px 6px #0009);opacity:.8;z-index:9}
 .pin{position:absolute;width:var(--ps,26px);height:var(--ps,26px);margin:calc(var(--ps,26px)/-2) 0 0 calc(var(--ps,26px)/-2)}
 #szb{position:absolute;right:10px;top:46px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 10px}
 #szb input{width:110px;padding:0;border:0;background:none}
@@ -139,9 +141,14 @@ function draw(){drawTiles();map.querySelectorAll(".pin,.me,.ring").forEach(e=>e.
  {const nice=[5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000],tgt=70/sc,m=nice.find(x=>x>=tgt)||50000;$("sb").textContent=m>=1000?m/1000+"km":m+"m"}
  const cls=ONL();$("legend").style.display=cls.length?"block":"none";$("legend").innerHTML=cls.map(l=>`<div><b>${esc(l.name)}</b> `+(l.id=="visit"||l.id=="apt"?S.res.filter(r=>!r[2]).slice(0,5).map(r=>`<span style="color:${r[1]}">${symOf(rshape(r))}</span>${esc(r[0])}`):S.sv.filter(g=>g.l==l.id&&!g.hid).slice(0,6).map(g=>`<span style="color:${g.c}">●</span>${esc(g.n)}`)).join(" ")+`</div>`).join("")}
 let down=null;
-map.addEventListener("pointerdown",e=>{if(swallow||e.target.closest("button,#szb"))return;down={x:e.clientX,y:e.clientY,cx:c.lng,cy:c.lat,moved:false,t:e.target}});
-map.addEventListener("pointermove",e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>6)down.moved=true;if(down.moved){if(follow){follow=false;locLabel()}const k=111320*sc;c.lng=down.cx-dx/(k*Math.cos(down.cy*Math.PI/180));c.lat=down.cy+dy/k;draw()}});
-map.addEventListener("pointerup",e=>{if(!down)return;const d=down;down=null;if(d.moved)return;if(Date.now()-lastClose<500)return;
+map.addEventListener("pointerdown",e=>{if(swallow||e.target.closest("button,#szb"))return;const pe=e.target.closest&&e.target.closest(".pin");down={x:e.clientX,y:e.clientY,cx:c.lng,cy:c.lat,moved:false,t:e.target,el:pe};
+ if(pe)down.tm=setTimeout(()=>{if(!down||down.moved)return;const h=S.houses.find(h=>h.id==pe.dataset.id);if(!h)return;const r=map.getBoundingClientRect(),q=pt(h.lat,h.lng);down.h=h;down.drag=true;down.ox=q.x-(down.x-r.left);down.oy=q.y-(down.y-r.top);pe.classList.add("drag");try{navigator.vibrate(30)}catch(_){}},350)});
+map.addEventListener("contextmenu",e=>e.preventDefault());
+map.addEventListener("pointercancel",()=>{if(down){clearTimeout(down.tm);if(down.drag)draw();down=null}});
+map.addEventListener("pointermove",e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
+ if(down.drag){const r=map.getBoundingClientRect(),p=un(e.clientX-r.left+down.ox,e.clientY-r.top+down.oy),q=pt(p.lat,p.lng);down.h.lat=p.lat;down.h.lng=p.lng;down.el.style.left=q.x+"px";down.el.style.top=q.y+"px";return}
+ if(Math.hypot(dx,dy)>6){down.moved=true;clearTimeout(down.tm)}if(down.moved){if(follow){follow=false;locLabel()}const k=111320*sc;c.lng=down.cx-dx/(k*Math.cos(down.cy*Math.PI/180));c.lat=down.cy+dy/k;draw()}});
+map.addEventListener("pointerup",e=>{if(!down)return;const d=down;down=null;clearTimeout(d.tm);if(d.drag){save();draw();return}if(d.moved)return;if(Date.now()-lastClose<500)return;
  const was=sheet.style.display=="block";if(was&&$("cl"))$("cl").click();
  const pin=d.t.closest&&d.t.closest(".pin");if(was&&!pin){lastClose=Date.now();return}if(pin){sel=S.houses.find(h=>h.id==pin.dataset.id)}
  else{const r=map.getBoundingClientRect(),p=un(e.clientX-r.left,e.clientY-r.top);sel={id:String(Date.now()),lat:p.lat,lng:p.lng,visits:[],flags:[],memo:"",survey:{},lay:ONL().map(l=>l.id),isNew:true}}
@@ -208,7 +215,7 @@ function renderHd(){const act=ONL().map(l=>esc(l.name)).join(" ＋ ");
  $("dx").onclick=()=>{ddOpen=false;renderHd()};
  $("bk").onclick=()=>{ddOpen=false;renderHd();openBackup()};
  $("rm2").onclick=()=>{ddOpen=false;renderHd();openResults()};
- $("le").onclick=()=>{ddOpen=false;renderHd();openLayers()}}
+ $("le").onclick=()=>{ddOpen=false;renderHd();openLayers()};syncBack()}
 let swallow=false;
 document.addEventListener("pointerdown",e=>{if(ddOpen&&!e.target.closest("header")){ddOpen=false;swallow=true;renderHd()}},true);
 document.addEventListener("pointerup",()=>{swallow=false});
@@ -308,5 +315,12 @@ $("loc").onclick=locate;if(S.houses.length)c={lat:S.houses[0].lat,lng:S.houses[0
 const urGo=d=>{const k=HI+d;if(k<0||k>=HS.length)return;HI=k;S=JSON.parse(HS[HI]);try{localStorage.setItem("houmon",HS[HI])}catch(e){}sheet.style.display="none";sel=null;roomSel=null;renderHd();draw();urUp();toast(d<0?"1つ前に戻しました":"1つ先に進みました",1500)};
 $("ur").onclick=()=>urGo(-1);$("rd2").onclick=()=>urGo(1);
 HS=[JSON.stringify(S)];HI=0;urUp();
+var hpush=false,hskip=0;
+function syncBack(){try{const o=sheet.style.display=="block"||ddOpen;if(o&&!hpush){history.pushState({o:1},"");hpush=true}else if(!o&&hpush){hpush=false;hskip++;history.back()}}catch(e){}}
+if(typeof MutationObserver!="undefined")new MutationObserver(syncBack).observe(sheet,{attributes:true,attributeFilter:["style"]});
+addEventListener("popstate",()=>{if(hskip>0){hskip--;return}hpush=false;
+ if(sheet.style.display=="block"){if(roomSel&&sel){roomSel=null;open()}else if($("cl"))$("cl").click();else{sheet.style.display="none";sel=null;draw()}}
+ if(ddOpen){ddOpen=false;renderHd()}
+ syncBack()});
 addEventListener("resize",draw);draw();
 </script></body></html>
