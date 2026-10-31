@@ -126,12 +126,12 @@ function linfo(l,h){if(l.id=="visit"||l.id=="apt"){const ap=l.id=="apt",A=ap?apt
  const g=S.sv.find(g=>g.l==l.id&&!g.hid&&h.survey&&h.survey[g.n]);return g?{c:g.c,t:g.i||ini(g.n)}:null}
 const TL=new Map();
 function drawTiles(){const box=$("tiles"),at=$("attr");if(S.tiles===false||!navigator.onLine&&false){box.style.display="none";at.style.display="none";return}box.style.display="";at.style.display="";
- const W=map.clientWidth,H=map.clientHeight,rad=Math.PI/180;let z=Math.round(Math.log2(156543.03*Math.cos(c.lat*rad)*sc));z=Math.max(5,Math.min(18,z));const n=2**z,
+ const bg=S.bg||"std",W=map.clientWidth,H=map.clientHeight,rad=Math.PI/180;let z=Math.round(Math.log2(156543.03*Math.cos(c.lat*rad)*sc));z=Math.max(5,Math.min(18,z));const n=2**z,
  a=un(0,0),b=un(W,H),X=lng=>Math.floor((lng+180)/360*n),Y=lat=>Math.floor((1-Math.log(Math.tan(lat*rad)+1/Math.cos(lat*rad))/Math.PI)/2*n),
  x0=Math.max(0,X(a.lng)),x1=Math.min(n-1,X(b.lng)),y0=Math.max(0,Y(a.lat)),y1=Math.min(n-1,Y(b.lat)),keep=new Set();
  if((x1-x0+1)*(y1-y0+1)>80)return;
  const la=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))/rad,lo=x=>x/n*360-180;
- for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const k=z+"/"+x+"/"+y;keep.add(k);let im=TL.get(k);if(!im){im=document.createElement("img");im.alt="";im.draggable=false;im.onerror=()=>{im.style.visibility="hidden"};im.src="https://cyberjapandata.gsi.go.jp/xyz/std/"+k+".png";TL.set(k,im);box.appendChild(im)}
+ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const k=bg+"/"+z+"/"+x+"/"+y;keep.add(k);let im=TL.get(k);if(!im){im=document.createElement("img");im.alt="";im.draggable=false;im.onerror=()=>{im.style.visibility="hidden"};im.src="https://cyberjapandata.gsi.go.jp/xyz/"+(bg=="photo"?"seamlessphoto":bg)+"/"+z+"/"+x+"/"+y+(bg=="photo"?".jpg":".png");TL.set(k,im);box.appendChild(im)}
   const p0=pt(la(y),lo(x)),p1=pt(la(y+1),lo(x+1));im.style.left=Math.floor(p0.x)+"px";im.style.top=Math.floor(p0.y)+"px";im.style.width=(Math.ceil(p1.x)-Math.floor(p0.x)+1)+"px";im.style.height=(Math.ceil(p1.y)-Math.floor(p0.y)+1)+"px"}
  TL.forEach((im,k)=>{if(!keep.has(k)){im.remove();TL.delete(k)}})}
 function draw(){drawTiles();map.querySelectorAll(".pin,.me,.ring").forEach(e=>e.remove()); S.houses.filter(h=>lays(h).some(id=>on(id))&&match(h)).forEach(h=>{const p=pt(h.lat,h.lng),e=document.createElement("div");e.className="pin";e.dataset.id=h.id;e.style.cssText+=`left:${p.x}px;top:${p.y}px;--ps:${h.size||26}px`;const em=h.flags.map(n=>S.flags.find(f=>f[0]==n)).filter(f=>f&&on(f[3]||"visit")).map(f=>f[1]).join("");const inf=ONL().map(l=>linfo(l,h)).filter(Boolean),fill=inf[0]?inf[0].c:GRAY,sh=(inf[0]&&inf[0].s)||"ci",x0=sh=="xx",rings=inf.slice(1,4).map((x,i)=>`0 0 0 ${3*(i+1)+1}px ${x.c}`);if(sh=="tr")e.className+=" ptr";e.innerHTML=`<i class="shp ${sh}" style="--c:${fill}${rings.length&&!x0?`;box-shadow:${rings.join(",")},0 1px 4px #0006`:""};color:${isLight(fill)?"#111":"#fff"}">${esc(inf[0]&&!x0?inf[0].t:"")}</i>`+(on("visit")&&streak(h)>=2?`<b class="bd">${streak(h)}</b>`:"")+(em?`<span class="fl" style="margin-top:${rings.length*3+1}px">${em}</span>`:"");map.appendChild(e)});
@@ -141,14 +141,18 @@ function draw(){drawTiles();map.querySelectorAll(".pin,.me,.ring").forEach(e=>e.
  {const nice=[5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000],tgt=70/sc,m=nice.find(x=>x>=tgt)||50000;$("sb").textContent=m>=1000?m/1000+"km":m+"m"}
  const cls=ONL();$("legend").style.display=cls.length?"block":"none";$("legend").innerHTML=cls.map(l=>`<div><b>${esc(l.name)}</b> `+(l.id=="visit"||l.id=="apt"?S.res.filter(r=>!r[2]).slice(0,5).map(r=>`<span style="color:${r[1]}">${symOf(rshape(r))}</span>${esc(r[0])}`):S.sv.filter(g=>g.l==l.id&&!g.hid).slice(0,6).map(g=>`<span style="color:${g.c}">●</span>${esc(g.n)}`)).join(" ")+`</div>`).join("")}
 let down=null;
-map.addEventListener("pointerdown",e=>{if(swallow||e.target.closest("button,#szb"))return;const pe=e.target.closest&&e.target.closest(".pin");down={x:e.clientX,y:e.clientY,cx:c.lng,cy:c.lat,moved:false,t:e.target,el:pe};
+const ptr=new Map();let pinch=null,raf=0;
+function startPinch(){if(down){clearTimeout(down.tm);const dr=down.drag;down=null;if(dr)draw()}const a=[...ptr.values()],mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2,r=map.getBoundingClientRect();pinch={d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,sc0:sc,g:un(mx-r.left,my-r.top)};if(follow){follow=false;locLabel()}}
+map.addEventListener("pointerdown",e=>{if(swallow||e.target.closest("button,#szb"))return;ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});if(ptr.size>=2){startPinch();return}if(pinch)return;const pe=e.target.closest&&e.target.closest(".pin");down={x:e.clientX,y:e.clientY,cx:c.lng,cy:c.lat,moved:false,t:e.target,el:pe};
  if(pe)down.tm=setTimeout(()=>{if(!down||down.moved)return;const h=S.houses.find(h=>h.id==pe.dataset.id);if(!h)return;const r=map.getBoundingClientRect(),q=pt(h.lat,h.lng);down.h=h;down.drag=true;down.p0=q;pe.classList.add("drag");try{navigator.vibrate(30)}catch(_){}},220)});
 map.addEventListener("contextmenu",e=>e.preventDefault());
-map.addEventListener("pointercancel",()=>{if(down){clearTimeout(down.tm);if(down.drag)draw();down=null}});
-map.addEventListener("pointermove",e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
+map.addEventListener("pointercancel",e=>{ptr.delete(e.pointerId);if(pinch&&!ptr.size)pinch=null;if(down){clearTimeout(down.tm);if(down.drag)draw();down=null}});
+map.addEventListener("pointermove",e=>{if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pinch){if(ptr.size<2||raf)return;raf=requestAnimationFrame(()=>{raf=0;if(!pinch||ptr.size<2)return;const a=[...ptr.values()],r=map.getBoundingClientRect(),mx=(a[0].x+a[1].x)/2-r.left,my=(a[0].y+a[1].y)/2-r.top,d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);sc=Math.max(0.04,Math.min(12,pinch.sc0*d/pinch.d0));const q=pt(pinch.g.lat,pinch.g.lng),W=map.clientWidth,H=map.clientHeight;c=un(W/2+(q.x-mx),H/2+(q.y-my));draw()});return}
+ if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
  if(down.drag){const p=un(down.p0.x+dx,down.p0.y+dy);down.h.lat=p.lat;down.h.lng=p.lng;down.el.style.transform="translate("+dx+"px,"+dy+"px)";return}
  if(Math.hypot(dx,dy)>6){down.moved=true;clearTimeout(down.tm)}if(down.moved){if(follow){follow=false;locLabel()}const k=111320*sc;c.lng=down.cx-dx/(k*Math.cos(down.cy*Math.PI/180));c.lat=down.cy+dy/k;draw()}});
-map.addEventListener("pointerup",e=>{if(!down)return;const d=down;down=null;clearTimeout(d.tm);if(d.drag){save();draw();return}if(d.moved)return;if(Date.now()-lastClose<500)return;
+map.addEventListener("pointerup",e=>{ptr.delete(e.pointerId);if(pinch){if(!ptr.size)pinch=null;return}if(!down)return;const d=down;down=null;clearTimeout(d.tm);if(d.drag){save();draw();return}if(d.moved)return;if(Date.now()-lastClose<500)return;
  const was=sheet.style.display=="block";if(was&&$("cl"))$("cl").click();
  const pin=d.t.closest&&d.t.closest(".pin");if(was&&!pin){lastClose=Date.now();return}if(pin){sel=S.houses.find(h=>h.id==pin.dataset.id)}
  else{const r=map.getBoundingClientRect(),p=un(e.clientX-r.left,e.clientY-r.top);sel={id:String(Date.now()),lat:p.lat,lng:p.lng,visits:[],flags:[],memo:"",survey:{},lay:ONL().map(l=>l.id),isNew:true}}
@@ -208,10 +212,10 @@ const bindAok=()=>{$("aok").onclick=()=>{const mx=parseInt($("amax").value,10),f
  if($("del"))$("del").onclick=()=>{if(!$("del").dataset.ok){$("del").dataset.ok=1;$("del").textContent="もう一度押すと削除します";return}S.houses=S.houses.filter(x=>x!==h);S.del=S.del.filter(d=>d.hid!=h.id);save();sheet.style.display="none";draw()}}
 let ddOpen=false;
 function renderHd(){const act=ONL().map(l=>esc(l.name)).join(" ＋ ");
- $("hd").innerHTML=`<button id="lb">👁 ${act} ${ddOpen?"▲":"▼"}</button><div id="dd" style="display:${ddOpen?"block":"none"}">`+CL().map(l=>`<label class="lr"><input type="checkbox" data-l="${l.id}" ${l.on?"checked":""}><span>${esc(l.name)}</span></label>`).join("")+`<div style="border-top:1px solid var(--line);margin:4px 0"></div><label class="lr"><input type="checkbox" id="tg" ${S.tiles===false?"":"checked"}><span>🗺 背景の地図を表示（通信が必要）</span></label><button class="lr" id="le">✎ レイヤーの追加・名前変更・削除</button><button class="lr" id="rm2">⚙ 訪問結果の管理（ピンの色・形・文字）</button><button class="lr" id="bk">💾 バックアップ（書き出し・読み込み）</button><button class="lr" id="dx">▲ 閉じる</button></div>`;
+ $("hd").innerHTML=`<button id="lb">👁 ${act} ${ddOpen?"▲":"▼"}</button><div id="dd" style="display:${ddOpen?"block":"none"}">`+CL().map(l=>`<label class="lr"><input type="checkbox" data-l="${l.id}" ${l.on?"checked":""}><span>${esc(l.name)}</span></label>`).join("")+`<div style="border-top:1px solid var(--line);margin:4px 0"></div><div class="lr" style="display:flex;align-items:center;gap:8px"><span>🗺 背景</span><select id="tg" style="flex:1;min-width:0"><option value="std">標準地図</option><option value="pale">淡色地図</option><option value="photo">航空写真</option><option value="off">なし（方眼）</option></select></div><button class="lr" id="le">✎ レイヤーの追加・名前変更・削除</button><button class="lr" id="rm2">⚙ 訪問結果の管理（ピンの色・形・文字）</button><button class="lr" id="bk">💾 バックアップ（書き出し・読み込み）</button><button class="lr" id="dx">▲ 閉じる</button></div>`;
  $("lb").onclick=()=>{ddOpen=!ddOpen;renderHd()};
  $("hd").querySelectorAll("[data-l]").forEach(c=>c.onchange=()=>{const l=LY(c.dataset.l);l.on=c.checked;if(!ONL().length)l.on=true;save();sheet.style.display="none";renderHd();draw()});
- $("tg").onchange=()=>{S.tiles=$("tg").checked;save();draw()};
+ $("tg").value=S.tiles===false?"off":(S.bg||"std");$("tg").onchange=()=>{const v=$("tg").value;if(v=="off")S.tiles=false;else{S.tiles=true;S.bg=v}save();draw()};
  $("dx").onclick=()=>{ddOpen=false;renderHd()};
  $("bk").onclick=()=>{ddOpen=false;renderHd();openBackup()};
  $("rm2").onclick=()=>{ddOpen=false;renderHd();openResults()};
