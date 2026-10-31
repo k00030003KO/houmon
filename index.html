@@ -12,7 +12,7 @@ header button{flex:1;padding:9px;border:1px solid var(--line);background:var(--b
 header button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #map{flex:1;position:relative;overflow:hidden;touch-action:none;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px}
 #map{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.pin.drag{filter:drop-shadow(0 6px 6px #0009);opacity:.8;z-index:9}
+.pin.drag{filter:drop-shadow(0 6px 6px #0009);opacity:.85;z-index:9;will-change:transform;transition:none}
 .pin{position:absolute;width:var(--ps,26px);height:var(--ps,26px);margin:calc(var(--ps,26px)/-2) 0 0 calc(var(--ps,26px)/-2)}
 #szb{position:absolute;right:10px;top:46px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 10px}
 #szb input{width:110px;padding:0;border:0;background:none}
@@ -142,11 +142,11 @@ function draw(){drawTiles();map.querySelectorAll(".pin,.me,.ring").forEach(e=>e.
  const cls=ONL();$("legend").style.display=cls.length?"block":"none";$("legend").innerHTML=cls.map(l=>`<div><b>${esc(l.name)}</b> `+(l.id=="visit"||l.id=="apt"?S.res.filter(r=>!r[2]).slice(0,5).map(r=>`<span style="color:${r[1]}">${symOf(rshape(r))}</span>${esc(r[0])}`):S.sv.filter(g=>g.l==l.id&&!g.hid).slice(0,6).map(g=>`<span style="color:${g.c}">●</span>${esc(g.n)}`)).join(" ")+`</div>`).join("")}
 let down=null;
 map.addEventListener("pointerdown",e=>{if(swallow||e.target.closest("button,#szb"))return;const pe=e.target.closest&&e.target.closest(".pin");down={x:e.clientX,y:e.clientY,cx:c.lng,cy:c.lat,moved:false,t:e.target,el:pe};
- if(pe)down.tm=setTimeout(()=>{if(!down||down.moved)return;const h=S.houses.find(h=>h.id==pe.dataset.id);if(!h)return;const r=map.getBoundingClientRect(),q=pt(h.lat,h.lng);down.h=h;down.drag=true;down.ox=q.x-(down.x-r.left);down.oy=q.y-(down.y-r.top);pe.classList.add("drag");try{navigator.vibrate(30)}catch(_){}},350)});
+ if(pe)down.tm=setTimeout(()=>{if(!down||down.moved)return;const h=S.houses.find(h=>h.id==pe.dataset.id);if(!h)return;const r=map.getBoundingClientRect(),q=pt(h.lat,h.lng);down.h=h;down.drag=true;down.p0=q;pe.classList.add("drag");try{navigator.vibrate(30)}catch(_){}},220)});
 map.addEventListener("contextmenu",e=>e.preventDefault());
 map.addEventListener("pointercancel",()=>{if(down){clearTimeout(down.tm);if(down.drag)draw();down=null}});
 map.addEventListener("pointermove",e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
- if(down.drag){const r=map.getBoundingClientRect(),p=un(e.clientX-r.left+down.ox,e.clientY-r.top+down.oy),q=pt(p.lat,p.lng);down.h.lat=p.lat;down.h.lng=p.lng;down.el.style.left=q.x+"px";down.el.style.top=q.y+"px";return}
+ if(down.drag){const p=un(down.p0.x+dx,down.p0.y+dy);down.h.lat=p.lat;down.h.lng=p.lng;down.el.style.transform="translate("+dx+"px,"+dy+"px)";return}
  if(Math.hypot(dx,dy)>6){down.moved=true;clearTimeout(down.tm)}if(down.moved){if(follow){follow=false;locLabel()}const k=111320*sc;c.lng=down.cx-dx/(k*Math.cos(down.cy*Math.PI/180));c.lat=down.cy+dy/k;draw()}});
 map.addEventListener("pointerup",e=>{if(!down)return;const d=down;down=null;clearTimeout(d.tm);if(d.drag){save();draw();return}if(d.moved)return;if(Date.now()-lastClose<500)return;
  const was=sheet.style.display=="block";if(was&&$("cl"))$("cl").click();
