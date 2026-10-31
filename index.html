@@ -31,6 +31,10 @@ header button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #sb{font-size:11px;text-align:center;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:2px 0}
 #toast{position:absolute;left:10px;right:10px;top:54px;display:none;z-index:7;padding:10px 12px;border-radius:10px;background:#111;color:#fff;font-size:13px;line-height:1.5;box-shadow:0 2px 10px #0008}
 #off{position:absolute;display:none;z-index:5;padding:8px 12px;border-radius:999px;border:2px solid #2563eb;background:var(--card);color:var(--fg);font-size:13px;font-weight:700;box-shadow:0 2px 8px #0005}
+#tiles{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;overflow:hidden}
+#tiles img{position:absolute;max-width:none;pointer-events:none;user-select:none;-webkit-user-drag:none}
+#attr{position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:10px;color:#333;background:#fffc;padding:0 6px;border-radius:6px 6px 0 0;z-index:4}
+#attr a{color:#333}
 #hint{position:absolute;left:8px;right:8px;top:8px;font-size:12px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 #loc{position:absolute;right:10px;bottom:10px;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:14px}
 #legend{position:absolute;left:10px;bottom:10px;font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
@@ -55,7 +59,7 @@ textarea,input{width:100%;padding:8px;border:1px solid var(--line);border-radius
 #dd input{width:20px;height:20px;padding:0;flex:none}
 </style></head><body>
 <header id="hd"></header>
-<div id="map"><div id="hint">地図をタップで家を登録。ドラッグで移動。※この試作は背景の地図なし（位置のみ）</div>
+<div id="map"><div id="tiles"></div><div id="attr">出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a></div><div id="hint">地図をタップで家を登録。ドラッグで移動。</div>
 <div id="legend"></div><div id="zb"><button id="zi" aria-label="拡大">＋</button><div id="sb"></div><button id="zo" aria-label="縮小">−</button></div><button id="off"></button><div id="toast"></div><div id="urb"><button id="ur" aria-label="1つ前に戻す">↶ 戻る</button><button id="rd2" aria-label="1つ先に進む">進む ↷</button></div><button id="fb">🔍 絞り込み</button><button id="loc">📍 現在地</button></div>
 <div id="sheet"></div>
 <script>
@@ -118,7 +122,17 @@ const un=(x,y)=>{const w=map.clientWidth,h=map.clientHeight,k=111320*sc;return{l
 const fmt=t=>{const d=new Date(t);return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 function linfo(l,h){if(l.id=="visit"||l.id=="apt"){const ap=l.id=="apt",A=ap?aptVis(h):h.visits,v=A[A.length-1];if(!v)return null;const rr=S.res.find(r=>r[0]==v.r)||[0,GRAY];return{c:rr[1],s:rshape(rr),t:ap?String(aptDone(h)||""):ini(v.r)}}
  const g=S.sv.find(g=>g.l==l.id&&!g.hid&&h.survey&&h.survey[g.n]);return g?{c:g.c,t:g.i||ini(g.n)}:null}
-function draw(){map.querySelectorAll(".pin,.me,.ring").forEach(e=>e.remove()); S.houses.filter(h=>lays(h).some(id=>on(id))&&match(h)).forEach(h=>{const p=pt(h.lat,h.lng),e=document.createElement("div");e.className="pin";e.dataset.id=h.id;e.style.cssText+=`left:${p.x}px;top:${p.y}px;--ps:${h.size||26}px`;const em=h.flags.map(n=>S.flags.find(f=>f[0]==n)).filter(f=>f&&on(f[3]||"visit")).map(f=>f[1]).join("");const inf=ONL().map(l=>linfo(l,h)).filter(Boolean),fill=inf[0]?inf[0].c:GRAY,sh=(inf[0]&&inf[0].s)||"ci",x0=sh=="xx",rings=inf.slice(1,4).map((x,i)=>`0 0 0 ${3*(i+1)+1}px ${x.c}`);if(sh=="tr")e.className+=" ptr";e.innerHTML=`<i class="shp ${sh}" style="--c:${fill}${rings.length&&!x0?`;box-shadow:${rings.join(",")},0 1px 4px #0006`:""};color:${isLight(fill)?"#111":"#fff"}">${esc(inf[0]&&!x0?inf[0].t:"")}</i>`+(on("visit")&&streak(h)>=2?`<b class="bd">${streak(h)}</b>`:"")+(em?`<span class="fl" style="margin-top:${rings.length*3+1}px">${em}</span>`:"");map.appendChild(e)});
+const TL=new Map();
+function drawTiles(){const box=$("tiles"),at=$("attr");if(S.tiles===false||!navigator.onLine&&false){box.style.display="none";at.style.display="none";return}box.style.display="";at.style.display="";
+ const W=map.clientWidth,H=map.clientHeight,rad=Math.PI/180;let z=Math.round(Math.log2(156543.03*Math.cos(c.lat*rad)*sc));z=Math.max(5,Math.min(18,z));const n=2**z,
+ a=un(0,0),b=un(W,H),X=lng=>Math.floor((lng+180)/360*n),Y=lat=>Math.floor((1-Math.log(Math.tan(lat*rad)+1/Math.cos(lat*rad))/Math.PI)/2*n),
+ x0=Math.max(0,X(a.lng)),x1=Math.min(n-1,X(b.lng)),y0=Math.max(0,Y(a.lat)),y1=Math.min(n-1,Y(b.lat)),keep=new Set();
+ if((x1-x0+1)*(y1-y0+1)>80)return;
+ const la=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))/rad,lo=x=>x/n*360-180;
+ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const k=z+"/"+x+"/"+y;keep.add(k);let im=TL.get(k);if(!im){im=document.createElement("img");im.alt="";im.draggable=false;im.onerror=()=>{im.style.visibility="hidden"};im.src="https://cyberjapandata.gsi.go.jp/xyz/std/"+k+".png";TL.set(k,im);box.appendChild(im)}
+  const p0=pt(la(y),lo(x)),p1=pt(la(y+1),lo(x+1));im.style.left=Math.floor(p0.x)+"px";im.style.top=Math.floor(p0.y)+"px";im.style.width=(Math.ceil(p1.x)-Math.floor(p0.x)+1)+"px";im.style.height=(Math.ceil(p1.y)-Math.floor(p0.y)+1)+"px"}
+ TL.forEach((im,k)=>{if(!keep.has(k)){im.remove();TL.delete(k)}})}
+function draw(){drawTiles();map.querySelectorAll(".pin,.me,.ring").forEach(e=>e.remove()); S.houses.filter(h=>lays(h).some(id=>on(id))&&match(h)).forEach(h=>{const p=pt(h.lat,h.lng),e=document.createElement("div");e.className="pin";e.dataset.id=h.id;e.style.cssText+=`left:${p.x}px;top:${p.y}px;--ps:${h.size||26}px`;const em=h.flags.map(n=>S.flags.find(f=>f[0]==n)).filter(f=>f&&on(f[3]||"visit")).map(f=>f[1]).join("");const inf=ONL().map(l=>linfo(l,h)).filter(Boolean),fill=inf[0]?inf[0].c:GRAY,sh=(inf[0]&&inf[0].s)||"ci",x0=sh=="xx",rings=inf.slice(1,4).map((x,i)=>`0 0 0 ${3*(i+1)+1}px ${x.c}`);if(sh=="tr")e.className+=" ptr";e.innerHTML=`<i class="shp ${sh}" style="--c:${fill}${rings.length&&!x0?`;box-shadow:${rings.join(",")},0 1px 4px #0006`:""};color:${isLight(fill)?"#111":"#fff"}">${esc(inf[0]&&!x0?inf[0].t:"")}</i>`+(on("visit")&&streak(h)>=2?`<b class="bd">${streak(h)}</b>`:"")+(em?`<span class="fl" style="margin-top:${rings.length*3+1}px">${em}</span>`:"");map.appendChild(e)});
  if(me){const p=pt(me.lat,me.lng);if(acc&&acc*sc>14){const r=document.createElement("div");r.className="ring";const d=Math.min(acc*sc*2,900);r.style.cssText=`left:${p.x-d/2}px;top:${p.y-d/2}px;width:${d}px;height:${d}px`;map.appendChild(r)}const e=document.createElement("div");e.className="me";e.style.cssText=`left:${p.x}px;top:${p.y}px`;map.appendChild(e);
   const W=map.clientWidth,H=map.clientHeight,off=$("off"),out=p.x<0||p.y<0||p.x>W||p.y>H;
   if(out){const dx=p.x-W/2,dy=p.y-H/2,m=Math.round(Math.hypot(dx,dy)/sc),ang=Math.atan2(dy,dx),ar=["→","↘","↓","↙","←","↖","↑","↗"][Math.round(((ang+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8],k=Math.min((W/2-50)/Math.abs(dx||1e-9),(H/2-40)/Math.abs(dy||1e-9));off.style.display="block";off.textContent=ar+" 現在地 "+(m>=1000?(m/1000).toFixed(1)+"km":m+"m");off.style.left=Math.max(8,Math.min(W-130,W/2+dx*k-60))+"px";off.style.top=Math.max(56,Math.min(H-50,H/2+dy*k-18))+"px"}else off.style.display="none"}else $("off").style.display="none";
@@ -187,9 +201,10 @@ const bindAok=()=>{$("aok").onclick=()=>{const mx=parseInt($("amax").value,10),f
  if($("del"))$("del").onclick=()=>{if(!$("del").dataset.ok){$("del").dataset.ok=1;$("del").textContent="もう一度押すと削除します";return}S.houses=S.houses.filter(x=>x!==h);S.del=S.del.filter(d=>d.hid!=h.id);save();sheet.style.display="none";draw()}}
 let ddOpen=false;
 function renderHd(){const act=ONL().map(l=>esc(l.name)).join(" ＋ ");
- $("hd").innerHTML=`<button id="lb">👁 ${act} ${ddOpen?"▲":"▼"}</button><div id="dd" style="display:${ddOpen?"block":"none"}">`+CL().map(l=>`<label class="lr"><input type="checkbox" data-l="${l.id}" ${l.on?"checked":""}><span>${esc(l.name)}</span></label>`).join("")+`<div style="border-top:1px solid var(--line);margin:4px 0"></div><button class="lr" id="le">✎ レイヤーの追加・名前変更・削除</button><button class="lr" id="rm2">⚙ 訪問結果の管理（ピンの色・形・文字）</button><button class="lr" id="bk">💾 バックアップ（書き出し・読み込み）</button><button class="lr" id="dx">▲ 閉じる</button></div>`;
+ $("hd").innerHTML=`<button id="lb">👁 ${act} ${ddOpen?"▲":"▼"}</button><div id="dd" style="display:${ddOpen?"block":"none"}">`+CL().map(l=>`<label class="lr"><input type="checkbox" data-l="${l.id}" ${l.on?"checked":""}><span>${esc(l.name)}</span></label>`).join("")+`<div style="border-top:1px solid var(--line);margin:4px 0"></div><label class="lr"><input type="checkbox" id="tg" ${S.tiles===false?"":"checked"}><span>🗺 背景の地図を表示（通信が必要）</span></label><button class="lr" id="le">✎ レイヤーの追加・名前変更・削除</button><button class="lr" id="rm2">⚙ 訪問結果の管理（ピンの色・形・文字）</button><button class="lr" id="bk">💾 バックアップ（書き出し・読み込み）</button><button class="lr" id="dx">▲ 閉じる</button></div>`;
  $("lb").onclick=()=>{ddOpen=!ddOpen;renderHd()};
  $("hd").querySelectorAll("[data-l]").forEach(c=>c.onchange=()=>{const l=LY(c.dataset.l);l.on=c.checked;if(!ONL().length)l.on=true;save();sheet.style.display="none";renderHd();draw()});
+ $("tg").onchange=()=>{S.tiles=$("tg").checked;save();draw()};
  $("dx").onclick=()=>{ddOpen=false;renderHd()};
  $("bk").onclick=()=>{ddOpen=false;renderHd();openBackup()};
  $("rm2").onclick=()=>{ddOpen=false;renderHd();openResults()};
