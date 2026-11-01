@@ -12,6 +12,8 @@ header button{flex:1;padding:9px;border:1px solid var(--line);background:var(--b
 header button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #map{flex:1;position:relative;overflow:hidden;touch-action:none;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px}
 #map{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.res{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.res.mv{position:relative;z-index:20;opacity:.85;box-shadow:0 6px 10px #0006}
 .pin.drag{filter:drop-shadow(0 6px 6px #0009);opacity:.85;z-index:9;will-change:transform;transition:none}
 .pin{position:absolute;width:var(--ps,26px);height:var(--ps,26px);margin:calc(var(--ps,26px)/-2) 0 0 calc(var(--ps,26px)/-2)}
 #szb{position:absolute;right:10px;top:46px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 10px}
@@ -33,8 +35,16 @@ header button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #zb button{width:44px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);font-size:20px;padding:0}
 #sb{font-size:11px;text-align:center;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:2px 0}
 #toast{position:absolute;left:10px;right:10px;top:54px;display:none;z-index:7;padding:10px 12px;border-radius:10px;background:#111;color:#fff;font-size:13px;line-height:1.5;box-shadow:0 2px 10px #0008}
+#sch{position:absolute;right:10px;top:122px;width:46px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);z-index:5;font-size:18px;padding:0}
+.tm{position:absolute;margin:-26px 0 0 -13px;font-size:26px;z-index:6;pointer-events:none;filter:drop-shadow(0 2px 2px #0007)}
+#cmp{position:absolute;right:10px;top:58px;width:46px;height:58px;padding:3px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);z-index:5;display:flex;flex-direction:column;align-items:center;gap:1px}
+#cmpn{position:relative;width:34px;height:34px;border-radius:50%;border:1px solid var(--line)}
+#cmpn b{position:absolute;top:-1px;left:50%;transform:translateX(-50%);font-size:9px;color:#dc2626;line-height:1}
+#cmpn::before{content:"";position:absolute;left:50%;top:9px;margin-left:-5px;border:5px solid transparent;border-bottom:13px solid #dc2626;border-top:0}
+#cmpn::after{content:"";position:absolute;left:50%;top:22px;margin-left:-5px;border:5px solid transparent;border-top:9px solid #9ca3af;border-bottom:0}
+#cmp small{font-size:10px;line-height:1.1}
 #off{position:absolute;display:none;z-index:5;padding:8px 12px;border-radius:999px;border:2px solid #2563eb;background:var(--card);color:var(--fg);font-size:13px;font-weight:700;box-shadow:0 2px 8px #0005}
-#tiles{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;overflow:hidden}
+#tiles{position:absolute;left:-50%;top:-50%;width:200%;height:200%;pointer-events:none;transform-origin:50% 50%}
 #tiles img{position:absolute;max-width:none;pointer-events:none;user-select:none;-webkit-user-drag:none}
 #attr{position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:10px;color:#333;background:#fffc;padding:0 6px;border-radius:6px 6px 0 0;z-index:4}
 #attr a{color:#333}
@@ -63,16 +73,16 @@ textarea,input{width:100%;padding:8px;border:1px solid var(--line);border-radius
 </style></head><body>
 <header id="hd"></header>
 <div id="map"><div id="tiles"></div><div id="attr">出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a></div><div id="hint">地図をタップで家を登録。ドラッグで移動。</div>
-<div id="legend"></div><div id="zb"><button id="zi" aria-label="拡大">＋</button><div id="sb"></div><button id="zo" aria-label="縮小">−</button></div><button id="off"></button><div id="toast"></div><div id="urb"><button id="ur" aria-label="1つ前に戻す">↶ 戻る</button><button id="rd2" aria-label="1つ先に進む">進む ↷</button></div><button id="fb">🔍 絞り込み</button><button id="loc">📍 現在地</button></div>
+<div id="legend"></div><div id="zb"><button id="zi" aria-label="拡大">＋</button><div id="sb"></div><button id="zo" aria-label="縮小">−</button></div><button id="sch" aria-label="住所・ピンを探す">🔎</button><button id="cmp" aria-label="方位（タップで、北が上／進行方向が上を切り替え）"><div id="cmpn"><b>N</b></div><small id="cmpm">北</small></button><button id="off"></button><div id="toast"></div><div id="urb"><button id="ur" aria-label="1つ前に戻す">↶ 戻る</button><button id="rd2" aria-label="1つ先に進む">進む ↷</button></div><button id="fb">🔍 絞り込み</button><button id="loc">📍 現在地</button></div>
 <div id="sheet"></div>
 <script>
-const RES=[["不在","#3b82f6"],["興味あり","#eab308"],["再訪","#f97316"],["断られた","#ef4444"],["強い拒否","#991b1b"],["契約","#16a34a"],["訪問NG","#111111"]];
+const RES=[["不在","#3b82f6"],["興味","#eab308"],["再訪","#f97316"],["断り","#ef4444"],["拒否","#991b1b"],["契約","#16a34a"],["訪問NG","#111111"]];
 const SURVEY=[["スマートメーター",[["1個","#eab308"],["2個","#9ca3af"],["不明","#d1d5db"]]],["パネル",[["あり","#ef4444"],["なし","#16a34a"]]],["日当たり",[["良","#16a34a"],["悪","#6b7280"]]]];
 const GRAY="#9ca3af";
-const DEF=[["不在","#3b82f6","不","ci"],["興味あり","#eab308","興","ci"],["再訪","#f97316","再","ci"],["断られた","#ef4444","断","ci"],["強い拒否","#991b1b","拒","xx"],["契約","#16a34a","契","ci"],["訪問NG","#111111","NG","ci"],["新築","#06b6d4","新","ci"],["空室","#8b5cf6","空","ci"]];
+const DEF=[["不在","#3b82f6","不","ci"],["応答","#0d9488","応","ci"],["対面","#f97316","対","ci"],["興味","#eab308","興","ci"],["アポ","#ec4899","ア","ci"],["再訪","#f97316","再","ci"],["断り","#ef4444","断","ci"],["NG","#991b1b","NG","xx"],["契約","#16a34a","契","ci"],["新築","#06b6d4","新","ci"],["空室","#8b5cf6","空","ci"]];
 const rshape=r=>r[5]||(r[3]?"xx":"ci");
 const symOf=k=>({ci:"●",xx:"✕",tr:"▲",sq:"■"})[k]||"●";
-const INI={"不在":"不","興味あり":"興","再訪":"再","断られた":"断","強い拒否":"拒","契約":"契","訪問NG":"NG","新築":"新","空室":"空"};
+const INI={"不在":"不","応答":"応","対面":"対","アポ":"ア","興味":"興","再訪":"再","断り":"断","NG":"NG","拒否":"拒","契約":"契","訪問NG":"NG","新築":"新","空室":"空"};
 const ini=n=>{const r=(typeof S!=="undefined"&&S&&S.res)?S.res.find(x=>x[0]==n):null;return (r&&r[4])||INI[n]||[...String(n)][0]||""};
 const isLight=c=>{const m=/^#(..)(..)(..)$/.exec(c);if(!m)return false;const[r,g,b]=m.slice(1).map(x=>parseInt(x,16));return (r*299+g*587+b*114)/1000>150};
 const COLOPT=`<option value="#ef4444">🔴 赤</option><option value="#f97316">🟠 オレンジ</option><option value="#eab308">🟡 黄</option><option value="#16a34a">🟢 緑</option><option value="#3b82f6">🔵 青</option><option value="#8b5cf6">🟣 紫</option><option value="#ec4899">🌸 ピンク</option><option value="#92400e">🟤 茶</option><option value="#111111">⚫ 黒</option><option value="#9ca3af">⚪ グレー</option>`;
@@ -82,10 +92,29 @@ try{const d=localStorage.getItem("houmon");if(d)S=JSON.parse(d)}catch(e){}
 if(S.rv!==1){S=JSON.parse(S0);S.rv=1}
 if(!S.del)S.del=[];S.del=S.del.filter(d=>d.at>Date.now()-6048e5);
 if(!S.res)S.res=RES.map(r=>[r[0],r[1]]);
-S.res.forEach(r=>{if(r[3]===undefined)r[3]=(r[0]=="強い拒否")});
+S.res.forEach(r=>{if(r[3]===undefined)r[3]=(r[0]=="強い拒否"||r[0]=="拒否"||r[0]=="NG")});
 if(!S.rn){DEF.filter(d=>d[0]=="新築"||d[0]=="空室").forEach(d=>{if(!S.res.some(r=>r[0]==d[0]))S.res.push([d[0],d[1],false,false,d[2],d[3]])});S.rn=1}
+if(!S.r2){const M={"興味あり":"興味","断られた":"断り","強い拒否":"拒否"},nm=n=>M[n]||n,fx=a=>(a||[]).forEach(v=>{if(v&&v.r)v.r=nm(v.r)});
+ S.res.forEach(r=>{if(M[r[0]]&&!S.res.some(x=>x[0]==M[r[0]]))r[0]=M[r[0]]});
+ S.houses.forEach(h=>{fx(h.visits);if(h.rooms)Object.values(h.rooms).forEach(R=>fx(R.visits))});
+ (S.del||[]).forEach(d=>{fx(d.items);if(d.msg)d.msg=d.msg.replace(/興味あり|断られた|強い拒否/g,m=>M[m])});
+ S.r2=1;try{localStorage.setItem("houmon",JSON.stringify(S))}catch(e){}}
 S.res.forEach(r=>{const d=DEF.find(x=>x[0]==r[0]);if(r[4]===undefined)r[4]=d?d[2]:"";if(r[5]===undefined)r[5]=r[3]?"xx":(d?d[3]:"ci");r[3]=(r[5]=="xx")});
 if(!S.size)S.size=26;
+if(!S.cm){[["再訪予定","🔁"],["訪問NG","🚫"]].forEach(([n,e])=>{if(!S.flags.some(f=>f[0]==n))S.flags.push([n,e,false,"visit"])});
+ S.res.forEach(r=>{if(r[0]=="再訪"||r[0]=="訪問NG")r[2]=true});
+ S.houses.forEach(h=>{const v=(h.visits||[])[(h.visits||[]).length-1];if(!v)return;const n=v.r=="再訪"?"再訪予定":v.r=="訪問NG"?"訪問NG":null;if(n){h.flags=h.flags||[];if(!h.flags.includes(n))h.flags.push(n)}});
+ S.cm=1;try{localStorage.setItem("houmon",JSON.stringify(S))}catch(e){}}
+const FG=id=>id=="apt"?"visit":id;
+if(!S.r3){[["応答","#0d9488","応","不在"],["対面","#f97316","対","応答"],["アポ","#ec4899","ア","興味"]].forEach(([n,c,i,af])=>{if(S.res.some(r=>r[0]==n))return;const k=S.res.findIndex(r=>r[0]==af),row=[n,c,false,false,i,"ci"];if(k>=0)S.res.splice(k+1,0,row);else S.res.push(row)});S.r3=1;try{localStorage.setItem("houmon",JSON.stringify(S))}catch(e){}}
+if(!S.ng){const nm=n=>(n=="拒否"||n=="訪問NG")?"NG":n,fx=a=>(a||[]).forEach(v=>{if(v&&v.r)v.r=nm(v.r)}),isN=h=>{const q=h.visits||[],v=q[q.length-1];return !!v&&(v.r=="拒否"||v.r=="訪問NG")};
+ S.houses.forEach(h=>{h.flags=h.flags||[];if(isN(h)&&!h.flags.includes("拒否"))h.flags.push("拒否");fx(h.visits);if(h.rooms)Object.values(h.rooms).forEach(R=>fx(R.visits));h.flags=[...new Set(h.flags.map(n=>n=="訪問NG"?"拒否":n))]});
+ (S.del||[]).forEach(d=>{fx(d.items);if(d.msg)d.msg=d.msg.replace(/拒否|訪問NG/g,"NG")});
+ const a=S.res.find(r=>r[0]=="拒否"),bi=S.res.findIndex(r=>r[0]=="訪問NG");
+ if(a){a[0]="NG";a[4]="NG";if(bi>=0)S.res.splice(bi,1)}else if(bi>=0){const b=S.res[bi];b[0]="NG";b[1]="#991b1b";b[3]=true;b[4]="NG";b[5]="xx"}
+ const f1=S.flags.findIndex(f=>f[0]=="訪問NG"),f2=S.flags.some(f=>f[0]=="拒否");
+ if(f1>=0){if(f2)S.flags.splice(f1,1);else S.flags[f1][0]="拒否"}else if(!f2)S.flags.push(["拒否","🚫",false,"visit"]);
+ S.ng=1;try{localStorage.setItem("houmon",JSON.stringify(S))}catch(e){}}
 if(!S.layers)S.layers=[{id:"visit",name:"訪問結果（戸建）",on:true},{id:"apt",name:"訪問結果（マンション）",on:false},{id:"survey",name:"現地調査",on:false},{id:"flag",name:"フラグ",on:true}];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const LY=id=>S.layers.find(l=>l.id==id),on=id=>{const l=LY(id);return !!(l&&l.on)};
@@ -111,8 +140,9 @@ let filt={flags:[],items:[],res:[]};
 const aptVis=h=>{const a=[];if(h.rooms)Object.values(h.rooms).forEach(r=>a.push(...r.visits));return a.sort((x,y)=>x.t-y.t)};
 const vis=h=>[...h.visits,...aptVis(h)].sort((x,y)=>x.t-y.t);
 const rv=(h,id)=>(h.rooms&&h.rooms[id])?h.rooms[id].visits:[];
-const aptRooms=h=>{const a=[];for(let f=h.apt.f1;f>=h.apt.f0;f--){const row=[];for(let n=1;n<=h.apt.per;n++)row.push(String(f*100+n));a.push([f,row])}return a};
-const aptDone=h=>Object.values(h.rooms||{}).filter(r=>r.visits.length).length;
+const aptRooms=h=>{const a=[];for(let f=h.apt.f1;f>=h.apt.f0;f--){const row=[];for(let n=1;n<=h.apt.per;n++)if(!(h.apt.ex||[]).includes(n%10))row.push(String(f*100+n));a.push([f,row])}return a};
+const aptTotal=h=>aptRooms(h).reduce((a,[f,r])=>a+r.length,0);
+const aptDone=h=>{const ok=new Set();aptRooms(h).forEach(([f,r])=>r.forEach(i=>ok.add(i)));return Object.entries(h.rooms||{}).filter(([id,r])=>r.visits.length&&ok.has(id)).length};
 const streak=h=>{let n=0;for(let i=h.visits.length-1;i>=0&&h.visits[i].r=="不在";i--)n++;return n};
 const match=h=>{if(h===sel)return true;if(filt.flags.length&&!filt.flags.every(n=>h.flags.includes(n)))return false;if(filt.items.length&&!filt.items.every(n=>h.survey&&h.survey[n]))return false;if(filt.res.length){const A=vis(h),v=A[A.length-1];if(!v||!filt.res.includes(v.r))return false}return true};
 let lastClose=0;
@@ -120,22 +150,41 @@ let acc=0,follow=false,watchId=null;
 let roomSel=null;
 let rdel=false,fdel=false,sdel=false,sel=null,me=null,c={lat:34.679,lng:135.601},sc=2;
 const $=id=>document.getElementById(id),map=$("map"),sheet=$("sheet");
-const pt=(lat,lng)=>{const w=map.clientWidth,h=map.clientHeight,k=111320*sc;return{x:w/2+(lng-c.lng)*k*Math.cos(c.lat*Math.PI/180),y:h/2-(lat-c.lat)*k}};
-const un=(x,y)=>{const w=map.clientWidth,h=map.clientHeight,k=111320*sc;return{lat:c.lat-(y-h/2)/k,lng:c.lng+(x-w/2)/(k*Math.cos(c.lat*Math.PI/180))}};
+let rot=0;
+const pt0=(lat,lng)=>{const w=map.clientWidth,h=map.clientHeight,k=111320*sc;return{x:w/2+(lng-c.lng)*k*Math.cos(c.lat*Math.PI/180),y:h/2-(lat-c.lat)*k}};
+const pt=(lat,lng)=>{const q=pt0(lat,lng);if(!rot)return q;const w=map.clientWidth,h=map.clientHeight,a=rot*Math.PI/180,dx=q.x-w/2,dy=q.y-h/2;return{x:w/2+dx*Math.cos(a)-dy*Math.sin(a),y:h/2+dx*Math.sin(a)+dy*Math.cos(a)}};
+const un=(x,y)=>{const w=map.clientWidth,h=map.clientHeight,k=111320*sc;if(rot){const a=-rot*Math.PI/180,dx=x-w/2,dy=y-h/2;x=w/2+dx*Math.cos(a)-dy*Math.sin(a);y=h/2+dx*Math.sin(a)+dy*Math.cos(a)}return{lat:c.lat-(y-h/2)/k,lng:c.lng+(x-w/2)/(k*Math.cos(c.lat*Math.PI/180))}};
 const fmt=t=>{const d=new Date(t);return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 function linfo(l,h){if(l.id=="visit"||l.id=="apt"){const ap=l.id=="apt",A=ap?aptVis(h):h.visits,v=A[A.length-1];if(!v)return null;const rr=S.res.find(r=>r[0]==v.r)||[0,GRAY];return{c:rr[1],s:rshape(rr),t:ap?String(aptDone(h)||""):ini(v.r)}}
  const g=S.sv.find(g=>g.l==l.id&&!g.hid&&h.survey&&h.survey[g.n]);return g?{c:g.c,t:g.i||ini(g.n)}:null}
 const TL=new Map();
+let tmark=null,lastTap=null;
+function dblNG(h){if(!on("visit")){toast("ダブルタップのNGは、「訪問結果（戸建）」を表示しているときに使えます。",3500);return}
+ const R=S.res.find(r=>rshape(r)=="xx"&&!r[2]),nm=R?R[0]:"NG";if(h.isNew){delete h.isNew;S.houses.push(h)}
+ if($("memo"))h.memo=$("memo").value;if($("addr"))h.addr=$("addr").value.trim();
+ h.visits.push({t:Date.now(),r:nm});if(!lays(h).includes("visit"))h.lay.push("visit");save();sheet.style.display="none";sel=null;roomSel=null;lastClose=Date.now();draw();toast("「"+nm+"」（✕）にしました。取り消すときは、左下の「戻る」を押してください。",3500)}
+function jumpTo(lat,lng,hid){c={lat,lng};follow=false;locLabel();if(!hid)sc=Math.max(sc,2);tmark={lat,lng};if(hid){const h=S.houses.find(x=>x.id==hid);if(h){const ids=lays(h);if(!ids.some(id=>on(id))){const L=LY(ids[0]);if(L){L.on=true;renderHd()}}}}sheet.style.display="none";sel=null;draw()}
+function openSearch(){sel=null;sheet.innerHTML=`<div class="top"><b>住所・ピンを探す</b><button class="x" id="cl">×</button></div><div class="row" style="margin-top:8px;align-items:center"><input id="sq" placeholder="住所・地名・目印（例：大阪市北区梅田）" style="flex:1 1 180px;width:auto"><button class="chip on" id="sgo">探す</button></div><div style="font-size:12px;color:var(--mut);margin-top:4px">入れた文字は、住所の検索のため、国土地理院のサービスに送られます。個人名は入れないでください。</div><div id="sres" style="margin-top:8px"></div>`;sheet.style.display="block";$("cl").onclick=()=>{sheet.style.display="none"};
+ const go=async()=>{const q=$("sq").value.trim(),R=$("sres");if(!q){R.innerHTML="";return}
+  const loc=S.houses.filter(h=>((h.addr||"")+" "+(h.memo||"")).includes(q)).slice(0,8);
+  let o=loc.length?`<h3>登録したピン</h3>`+loc.map(h=>`<button class="lr" data-sh="${esc(h.id)}">📍 ${esc((h.addr||"").slice(0,30)||(h.memo||"").slice(0,30)||"（住所なし）")}</button>`).join(""):"";
+  R.innerHTML=o+`<div style="color:var(--mut);margin-top:6px">住所を検索しています…</div>`;bindS();
+  let list=[],err="";try{const r=await fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q));const j=await r.json();list=(Array.isArray(j)?j:[]).slice(0,6).map(f=>({t:(f.properties&&f.properties.title)||"",lng:f.geometry&&f.geometry.coordinates&&f.geometry.coordinates[0],lat:f.geometry&&f.geometry.coordinates&&f.geometry.coordinates[1]})).filter(x=>x.t&&x.lat!=null)}catch(e){err="住所の検索につながりませんでした。通信状況か、検索サービス側の制限かもしれません。"}
+  R.innerHTML=o+(list.length?`<h3>住所</h3>`+list.map((x,i)=>`<button class="lr" data-sa="${i}">🔎 ${esc(x.t)}</button>`).join(""):`<div style="color:var(--mut);margin-top:6px">${esc(err||(loc.length?"住所の候補は見つかりませんでした。":"見つかりませんでした。"))}</div>`);window._sl=list;bindS()};
+ const bindS=()=>{sheet.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{const h=S.houses.find(x=>x.id==b.dataset.sh);if(h)jumpTo(h.lat,h.lng,h.id)});sheet.querySelectorAll("[data-sa]").forEach(b=>b.onclick=()=>{const x=(window._sl||[])[+b.dataset.sa];if(x)jumpTo(x.lat,x.lng)})};
+ $("sgo").onclick=go;$("sq").onkeydown=e=>{if(e.key=="Enter")go()};setTimeout(()=>{try{$("sq").focus()}catch(e){}},50)}
+$("sch").onclick=openSearch;
+function cmpUp(){const n=$("cmpn"),m=$("cmpm");if(n)n.style.transform="rotate("+rot+"deg)";if(m)m.textContent=S.hm=="h"?"進行":"北"}
 function drawTiles(){const box=$("tiles"),at=$("attr");if(S.tiles===false||!navigator.onLine&&false){box.style.display="none";at.style.display="none";return}box.style.display="";at.style.display="";
  const bg=S.bg||"std",W=map.clientWidth,H=map.clientHeight,rad=Math.PI/180;let z=Math.round(Math.log2(156543.03*Math.cos(c.lat*rad)*sc));z=Math.max(5,Math.min(18,z));const n=2**z,
- a=un(0,0),b=un(W,H),X=lng=>Math.floor((lng+180)/360*n),Y=lat=>Math.floor((1-Math.log(Math.tan(lat*rad)+1/Math.cos(lat*rad))/Math.PI)/2*n),
+ cs=[un(0,0),un(W,0),un(0,H),un(W,H)],a={lat:Math.max(...cs.map(q=>q.lat)),lng:Math.min(...cs.map(q=>q.lng))},b={lat:Math.min(...cs.map(q=>q.lat)),lng:Math.max(...cs.map(q=>q.lng))},X=lng=>Math.floor((lng+180)/360*n),Y=lat=>Math.floor((1-Math.log(Math.tan(lat*rad)+1/Math.cos(lat*rad))/Math.PI)/2*n),
  x0=Math.max(0,X(a.lng)),x1=Math.min(n-1,X(b.lng)),y0=Math.max(0,Y(a.lat)),y1=Math.min(n-1,Y(b.lat)),keep=new Set();
- if((x1-x0+1)*(y1-y0+1)>80)return;
+ if((x1-x0+1)*(y1-y0+1)>120)return;box.style.transform=rot?"rotate("+rot+"deg)":"";
  const la=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))/rad,lo=x=>x/n*360-180;
  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const k=bg+"/"+z+"/"+x+"/"+y;keep.add(k);let im=TL.get(k);if(!im){im=document.createElement("img");im.alt="";im.draggable=false;im.onerror=()=>{im.style.visibility="hidden"};im.src="https://cyberjapandata.gsi.go.jp/xyz/"+(bg=="photo"?"seamlessphoto":bg)+"/"+z+"/"+x+"/"+y+(bg=="photo"?".jpg":".png");TL.set(k,im);box.appendChild(im)}
-  const p0=pt(la(y),lo(x)),p1=pt(la(y+1),lo(x+1));im.style.left=Math.floor(p0.x)+"px";im.style.top=Math.floor(p0.y)+"px";im.style.width=(Math.ceil(p1.x)-Math.floor(p0.x)+1)+"px";im.style.height=(Math.ceil(p1.y)-Math.floor(p0.y)+1)+"px"}
+  const p0=pt0(la(y),lo(x)),p1=pt0(la(y+1),lo(x+1));im.style.left=(Math.floor(p0.x)+W/2)+"px";im.style.top=(Math.floor(p0.y)+H/2)+"px";im.style.width=(Math.ceil(p1.x)-Math.floor(p0.x)+1)+"px";im.style.height=(Math.ceil(p1.y)-Math.floor(p0.y)+1)+"px"}
  TL.forEach((im,k)=>{if(!keep.has(k)){im.remove();TL.delete(k)}})}
-function draw(){drawTiles();map.querySelectorAll(".pin,.me,.ring").forEach(e=>e.remove()); S.houses.filter(h=>lays(h).some(id=>on(id))&&match(h)).forEach(h=>{const p=pt(h.lat,h.lng),e=document.createElement("div");e.className="pin";e.dataset.id=h.id;e.style.cssText+=`left:${p.x}px;top:${p.y}px;--ps:${h.size||26}px`;const em=h.flags.map(n=>S.flags.find(f=>f[0]==n)).filter(f=>f&&on(f[3]||"visit")).map(f=>f[1]).join("");const inf=ONL().map(l=>linfo(l,h)).filter(Boolean),fill=inf[0]?inf[0].c:GRAY,sh=(inf[0]&&inf[0].s)||"ci",x0=sh=="xx",rings=inf.slice(1,4).map((x,i)=>`0 0 0 ${3*(i+1)+1}px ${x.c}`);if(sh=="tr")e.className+=" ptr";e.innerHTML=`<i class="shp ${sh}" style="--c:${fill}${rings.length&&!x0?`;box-shadow:${rings.join(",")},0 1px 4px #0006`:""};color:${isLight(fill)?"#111":"#fff"}">${esc(inf[0]&&!x0?inf[0].t:"")}</i>`+(on("visit")&&streak(h)>=2?`<b class="bd">${streak(h)}</b>`:"")+(em?`<span class="fl" style="margin-top:${rings.length*3+1}px">${em}</span>`:"");map.appendChild(e)});
+function draw(){if(!(follow&&S.hm=="h"))rot=0;drawTiles();cmpUp();map.querySelectorAll(".pin,.me,.ring,.tm").forEach(e=>e.remove());if(tmark){const q=pt(tmark.lat,tmark.lng),e=document.createElement("div");e.className="tm";e.textContent="📌";e.style.cssText+=`left:${q.x}px;top:${q.y}px`;map.appendChild(e)} S.houses.filter(h=>lays(h).some(id=>on(id))&&match(h)).forEach(h=>{const p=pt(h.lat,h.lng),e=document.createElement("div");e.className="pin";e.dataset.id=h.id;e.style.cssText+=`left:${p.x}px;top:${p.y}px;--ps:${h.size||26}px`;const em=h.flags.map(n=>S.flags.find(f=>f[0]==n)).filter(f=>f&&(on(f[3]||"visit")||(f[3]=="visit"&&on("apt")))).map(f=>f[1]).join("");const inf=ONL().map(l=>linfo(l,h)).filter(Boolean),fill=inf[0]?inf[0].c:GRAY,sh=(inf[0]&&inf[0].s)||"ci",x0=sh=="xx",rings=inf.slice(1,4).map((x,i)=>`0 0 0 ${3*(i+1)+1}px ${x.c}`);if(sh=="tr")e.className+=" ptr";e.innerHTML=`<i class="shp ${sh}" style="--c:${fill}${rings.length&&!x0?`;box-shadow:${rings.join(",")},0 1px 4px #0006`:""};color:${isLight(fill)?"#111":"#fff"}">${esc(inf[0]&&!x0?inf[0].t:"")}</i>`+(on("visit")&&streak(h)>=2?`<b class="bd">${streak(h)}</b>`:"")+(em?`<span class="fl" style="margin-top:${rings.length*3+1}px">${em}</span>`:"");map.appendChild(e)});
  if(me){const p=pt(me.lat,me.lng);if(acc&&acc*sc>14){const r=document.createElement("div");r.className="ring";const d=Math.min(acc*sc*2,900);r.style.cssText=`left:${p.x-d/2}px;top:${p.y-d/2}px;width:${d}px;height:${d}px`;map.appendChild(r)}const e=document.createElement("div");e.className="me";e.style.cssText=`left:${p.x}px;top:${p.y}px`;map.appendChild(e);
   const W=map.clientWidth,H=map.clientHeight,off=$("off"),out=p.x<0||p.y<0||p.x>W||p.y>H;
   if(out){const dx=p.x-W/2,dy=p.y-H/2,m=Math.round(Math.hypot(dx,dy)/sc),ang=Math.atan2(dy,dx),ar=["→","↘","↓","↙","←","↖","↑","↗"][Math.round(((ang+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8],k=Math.min((W/2-50)/Math.abs(dx||1e-9),(H/2-40)/Math.abs(dy||1e-9));off.style.display="block";off.textContent=ar+" 現在地 "+(m>=1000?(m/1000).toFixed(1)+"km":m+"m");off.style.left=Math.max(8,Math.min(W-130,W/2+dx*k-60))+"px";off.style.top=Math.max(56,Math.min(H-50,H/2+dy*k-18))+"px"}else off.style.display="none"}else $("off").style.display="none";
@@ -152,30 +201,46 @@ map.addEventListener("pointermove",e=>{if(ptr.has(e.pointerId))ptr.set(e.pointer
  if(pinch){if(ptr.size<2||raf)return;raf=requestAnimationFrame(()=>{raf=0;if(!pinch||ptr.size<2)return;const a=[...ptr.values()],r=map.getBoundingClientRect(),mx=(a[0].x+a[1].x)/2-r.left,my=(a[0].y+a[1].y)/2-r.top,d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);sc=Math.max(0.04,Math.min(12,pinch.sc0*d/pinch.d0));const q=pt(pinch.g.lat,pinch.g.lng),W=map.clientWidth,H=map.clientHeight;c=un(W/2+(q.x-mx),H/2+(q.y-my));draw()});return}
  if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
  if(down.drag){const p=un(down.p0.x+dx,down.p0.y+dy);down.h.lat=p.lat;down.h.lng=p.lng;down.el.style.transform="translate("+dx+"px,"+dy+"px)";return}
- if(Math.hypot(dx,dy)>6){down.moved=true;clearTimeout(down.tm)}if(down.moved){if(follow){follow=false;locLabel()}const k=111320*sc;c.lng=down.cx-dx/(k*Math.cos(down.cy*Math.PI/180));c.lat=down.cy+dy/k;draw()}});
-map.addEventListener("pointerup",e=>{ptr.delete(e.pointerId);if(pinch){if(!ptr.size)pinch=null;return}if(!down)return;const d=down;down=null;clearTimeout(d.tm);if(d.drag){save();draw();return}if(d.moved)return;if(Date.now()-lastClose<500)return;
- const was=sheet.style.display=="block";if(was&&$("cl"))$("cl").click();
+ if(Math.hypot(dx,dy)>6){down.moved=true;clearTimeout(down.tm)}if(down.moved){if(follow){follow=false;locLabel()}const k=111320*sc,ra=rot*Math.PI/180,ux=dx*Math.cos(ra)+dy*Math.sin(ra),uy=-dx*Math.sin(ra)+dy*Math.cos(ra);c.lng=down.cx-ux/(k*Math.cos(down.cy*Math.PI/180));c.lat=down.cy+uy/k;draw()}});
+map.addEventListener("pointerup",e=>{ptr.delete(e.pointerId);if(pinch){if(!ptr.size)pinch=null;return}if(!down)return;const d=down;down=null;clearTimeout(d.tm);if(d.drag){save();draw();return}if(d.moved)return;
+ if(lastTap&&Date.now()-lastTap.t<400&&Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<30&&sheet.style.display=="block"&&sel&&sel===lastTap.h){const h=sel;lastTap=null;dblNG(h);return}
+ if(Date.now()-lastClose<500)return;
+ tmark=null;const was=sheet.style.display=="block";if(was&&$("cl"))$("cl").click();
  const pin=d.t.closest&&d.t.closest(".pin");if(was&&!pin){lastClose=Date.now();return}if(pin){sel=S.houses.find(h=>h.id==pin.dataset.id)}
  else{const r=map.getBoundingClientRect(),p=un(e.clientX-r.left,e.clientY-r.top);sel={id:String(Date.now()),lat:p.lat,lng:p.lng,visits:[],flags:[],memo:"",survey:{},lay:ONL().map(l=>l.id),isNew:true}}
- fdel=rdel=sdel=false;roomSel=null;open()});
-function aptForm(){const h=sel;return `<div class="row" style="margin-top:8px;align-items:center"><input id="amax" inputmode="numeric" placeholder="最大の部屋番号（例：609）" value="${h.apt?h.apt.f1*100+h.apt.per:""}" style="flex:2 1 150px;width:auto"><input id="af0" inputmode="numeric" placeholder="最初の階" value="${h.apt?h.apt.f0:1}" style="flex:0 0 76px;width:76px"><button class="chip on" id="aok">作成</button></div><div id="amsg" style="font-size:12px;color:var(--mut);margin-top:4px">「609」なら、6階まで、1階あたり01〜09号室（601〜609）の一覧を作ります。2階から始まる建物は、「最初の階」を2にしてください。</div>`}
-function open(){const h=sel;S.del=S.del.filter(d=>d.at>Date.now()-6048e5);let o=`<div class="top"><div><b>${h.isNew?"新しい訪問先":"訪問先"}</b> <span style="font-size:12px;color:var(--mut)">［${ONL().map(l=>esc(l.name)).join("＋")}］</span></div><div style="display:flex;align-items:center;gap:4px"><span style="font-size:12px;color:var(--mut)">ピン</span>${[[18,"小"],[26,"中"],[38,"大"],[50,"特大"]].map(([z,t])=>`<button class="chip ${(h.size||26)==z?"on":""}" style="padding:3px 9px;font-size:12px" data-z="${z}">${t}</button>`).join("")}<button class="x" id="cl">×</button></div></div>`;
+ fdel=rdel=sdel=false;roomSel=null;open();lastTap={t:Date.now(),x:e.clientX,y:e.clientY,h:sel};sheet.style.pointerEvents="none";setTimeout(()=>{sheet.style.pointerEvents=""},400)});
+let dragRes=false,lastDrag=0;
+sheet.addEventListener("touchmove",e=>{if(dragRes)e.preventDefault()},{passive:false});
+sheet.addEventListener("contextmenu",e=>{if(e.target.closest&&e.target.closest(".res"))e.preventDefault()});
+function reorderRes(attr){sheet.querySelectorAll("["+attr+"]").forEach(b=>{let tm=0,drag=false,sx=0,sy=0,tg=null;
+ b.addEventListener("click",ev=>{if(Date.now()-lastDrag<500){ev.stopImmediatePropagation();ev.preventDefault()}},true);
+ const mv=e=>{if(!drag){if(Math.hypot(e.clientX-sx,e.clientY-sy)>8){clearTimeout(tm);off()}return}
+  b.style.transform="translate("+(e.clientX-sx)+"px,"+(e.clientY-sy)+"px)";b.style.pointerEvents="none";const t=document.elementFromPoint(e.clientX,e.clientY),x=t&&t.closest?t.closest("["+attr+"]"):null;b.style.pointerEvents="";
+  if(tg&&tg!==x)tg.style.outline="";tg=x&&x!==b?x:null;if(tg)tg.style.outline="2px solid var(--fg)"};
+ const up=()=>{clearTimeout(tm);const was=drag;off();if(!was)return;lastDrag=Date.now();const t=tg;tg=null;dragRes=false;b.classList.remove("mv");b.style.transform="";
+  if(t){const fi=+b.dataset[attr.slice(5)],ti=+t.dataset[attr.slice(5)];if(fi!==ti){const[x]=S.res.splice(fi,1);S.res.splice(ti,0,x);save()}}open()};
+ const off=()=>{document.removeEventListener("pointermove",mv,true);document.removeEventListener("pointerup",up,true);document.removeEventListener("pointercancel",up,true)};
+ b.addEventListener("pointerdown",e=>{sx=e.clientX;sy=e.clientY;clearTimeout(tm);document.addEventListener("pointermove",mv,true);document.addEventListener("pointerup",up,true);document.addEventListener("pointercancel",up,true);
+  tm=setTimeout(()=>{drag=true;dragRes=true;b.classList.add("mv");try{navigator.vibrate(25)}catch(_){}},300)})})}
+function aptForm(){const h=sel;return `<div class="row" style="margin-top:8px;align-items:center"><input id="amax" inputmode="numeric" placeholder="最大の部屋番号（例：609）" value="${h.apt?h.apt.f1*100+h.apt.per:""}" style="flex:2 1 150px;width:auto"><input id="af0" inputmode="numeric" placeholder="最初の階" value="${h.apt?h.apt.f0:1}" style="flex:0 0 76px;width:76px"></div><div class="row" style="margin-top:6px;align-items:center;font-size:13px"><span>使わない下1桁：</span><label><input type="checkbox" id="ex4" ${(h.apt&&(h.apt.ex||[]).includes(4))?"checked":""}> 4</label><label><input type="checkbox" id="ex9" ${(h.apt&&(h.apt.ex||[]).includes(9))?"checked":""}> 9</label><button class="chip on" id="aok" style="margin-left:auto">作成</button></div><div id="amsg" style="font-size:12px;color:var(--mut);margin-top:4px">「609」なら、6階まで、1階あたり01〜09号室（601〜609）の一覧を作ります。2階から始まる建物は、「最初の階」を2にしてください。「使わない下1桁」にチェックすると、下1桁が4や9の部屋（404、409など）を一覧から外します。</div>`}
+function open(){const h=sel;S.del=S.del.filter(d=>d.at>Date.now()-6048e5);let o=`<div class="top"><div><b>${h.isNew?"新しい訪問先":"訪問先"}</b> <span style="font-size:12px;color:var(--mut)">［${ONL().map(l=>esc(l.name)).join("＋")}］</span></div><div style="display:flex;align-items:center;gap:4px"><span style="font-size:12px;color:var(--mut)">ピン</span>${[[18,"小"],[26,"中"],[38,"大"],[50,"特大"]].map(([z,t])=>`<button class="chip ${(h.size||26)==z?"on":""}" style="padding:3px 9px;font-size:12px" data-z="${z}">${t}</button>`).join("")}<button class="x" id="cl">×</button></div></div><input id="addr" placeholder="住所・目印（検索で探せます。個人名は書かない）" value="${esc(h.addr||"")}" style="width:100%;margin-top:6px">`;
  o+=`<h3>このピンを表示するレイヤー</h3><div class="row">`+CL().map(l=>l.id).map(id=>`<button class="chip ${lays(h).includes(id)?"on":""}" data-ly="${id}">${esc(LY(id).name)}</button>`).join("")+`</div>`;
  if(on("apt")&&!h.apt){o+=`<h3>${esc(LY("apt").name)}</h3><div style="font-size:13px">この建物の部屋の一覧を作ります。</div>`+aptForm()}
  if(on("apt")&&h.apt){
-  if(!roomSel){o+=`<h3>${esc(LY("apt").name)}（部屋をタップ）</h3><div class="row" style="align-items:center;margin-bottom:6px"><span style="font-size:13px">🏢 ${h.apt.f0}〜${h.apt.f1}階 × ${h.apt.per}部屋（記録のある部屋 ${aptDone(h)}/${(h.apt.f1-h.apt.f0+1)*h.apt.per}）</span><button class="chip" id="mkapt">部屋の構成を変える</button><button class="chip" id="noapt">部屋の設定を消す</button></div>`+aptRooms(h).map(([f,row])=>`<div style="display:flex;gap:4px;align-items:center;margin-bottom:4px"><span style="width:30px;font-size:12px;color:var(--mut);flex:none">${f}F</span><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:4px;flex:1">`+row.map(id=>{const v=rv(h,id).slice(-1)[0],rr=v?S.res.find(r=>r[0]==v.r):null,col=rr?rr[1]:null;return `<button class="chip" style="padding:8px 0;font-size:13px;line-height:1.2;${col?`background:${col};color:${isLight(col)?"#111":"#fff"};border-color:${col}`:""}" data-rm="${id}">${id}${v?`<br><small>${rr&&rr[3]?"✕":esc(ini(v.r))}</small>`:""}</button>`}).join("")+`</div></div>`).join("")}
+  if(!roomSel){o+=`<h3>${esc(LY("apt").name)}（部屋をタップ）</h3><div class="row" style="align-items:center;margin-bottom:6px"><span style="font-size:13px">🏢 ${h.apt.f0}〜${h.apt.f1}階 × ${h.apt.per}部屋（記録のある部屋 ${aptDone(h)}/${aptTotal(h)}）</span><button class="chip" id="mkapt">部屋の構成を変える</button><button class="chip" id="noapt">部屋の設定を消す</button></div>`+aptRooms(h).map(([f,row])=>`<div style="display:flex;gap:4px;align-items:center;margin-bottom:4px"><span style="width:30px;font-size:12px;color:var(--mut);flex:none">${f}F</span><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:4px;flex:1">`+row.map(id=>{const v=rv(h,id).slice(-1)[0],rr=v?S.res.find(r=>r[0]==v.r):null,col=rr?rr[1]:null;return `<button class="chip" style="padding:8px 0;font-size:13px;line-height:1.2;${col?`background:${col};color:${isLight(col)?"#111":"#fff"};border-color:${col}`:""}" data-rm="${id}">${id}${v?`<br><small>${rr&&rr[3]?"✕":esc(ini(v.r))}</small>`:""}</button>`}).join("")+`</div></div>`).join("")}
   else{const rvs=rv(h,roomSel);o+=`<div class="row" style="align-items:center;margin-top:10px"><button class="chip" id="rb">← 部屋一覧</button><b style="font-size:16px">${esc(roomSel)}号室</b></div><h3>${esc(LY("apt").name)}（タップで記録。記録すると一覧に戻ります）</h3><div class="row">`+S.res.map((r,i)=>({n:r[0],c:r[1],hid:r[2],x:r[3],i})).filter(r=>!r.hid).map(r=>`<button class="chip res" style="border-left-color:${r.c}" data-rr="${r.i}">${r.x?"✕ ":""}${esc(r.n)}</button>`).join("")+`</div><h3>この部屋の履歴</h3><div class="hist">`+(rvs.length?rvs.map((v,i)=>({v,i})).reverse().map(q=>`<div style="display:flex;justify-content:space-between;align-items:center"><span>${fmt(q.v.t)}　${esc(q.v.r)}</span><button class="x" style="font-size:16px" data-rd="${q.i}" aria-label="この履歴を削除">🗑</button></div>`).join(""):`<div style="color:var(--mut)">まだ記録なし</div>`)+`</div><h3>この部屋のメモ（個人名は書かない）</h3><textarea id="rmemo" rows="2">${esc(((h.rooms&&h.rooms[roomSel])||{}).memo||"")}</textarea>`}
  }
  if(on("visit")){o+=`<h3>${rdel?"ゴミ箱に入れる結果をタップ（履歴は消えません。もう一度タップで戻せます）":esc(LY("visit").name)+"（タップで記録）"}</h3><div class="row">`+S.res.map((r,i)=>({n:r[0],c:r[1],hid:r[2],x:r[3],i})).filter(r=>rdel||!r.hid).map(r=>`<button class="chip res" style="border-left-color:${r.c};${rdel?(r.hid?"opacity:.45;text-decoration:line-through":"color:#dc2626"):""}" data-r="${r.i}">${r.x?"✕ ":""}${esc(r.n)}</button>`).join("")+`<button class="chip" id="ar">＋追加</button><button class="chip" id="rd">${rdel?"完了":"🗑 ゴミ箱"}</button><button class="chip" id="rm3">⚙ 管理</button>${rdel&&S.res.some(r=>r[2])?`<button class="chip" id="rx" style="border-color:#dc2626;color:#dc2626">ゴミ箱を空にする</button>`:""}</div>`}
  ONL().filter(l=>l.id!="visit"&&l.id!="apt").forEach(L=>{o+=`<h3>${esc(L.name)}${sdel?"：ゴミ箱に入れるものをタップ（もう一度タップで戻せます）":"（タップで付け外し）"}</h3><div class="row">`+S.sv.map((g,gi)=>({g,gi})).filter(p=>p.g.l==L.id&&(sdel||!p.g.hid||h.survey[p.g.n])).map(p=>sdel?`<button class="chip" style="${p.g.hid?"opacity:.45;text-decoration:line-through":"color:#dc2626;border-color:#dc2626"}" data-gh="${p.gi}">${esc(p.g.n)}</button>`:`<button class="chip ${h.survey[p.g.n]?"on":""}" style="border-left:8px solid ${p.g.c}" data-s="${p.gi}">${esc(p.g.n)}</button>`).join("")+(sdel?"":`<button class="chip" data-sg="${L.id}">＋追加</button>`)+`<button class="chip" data-sd="1">${sdel?"完了":"🗑 ゴミ箱"}</button>${sdel&&S.sv.some(g=>g.l==L.id&&g.hid)?`<button class="chip" data-sx="${L.id}" style="border-color:#dc2626;color:#dc2626">ゴミ箱を空にする</button>`:""}</div>`});
- ONL().map(l=>l.id).forEach(Lid=>{o+=`<h3>${esc(LY(Lid).name)}のフラグ${fdel?"：ゴミ箱に入れるものをタップ（家の記録は消えません。もう一度タップで戻せます）":"（タップで付け外し）"}</h3><div class="row">`+S.flags.map(([n,em,hid,lid],i)=>({n,em,hid,lid,i})).filter(f=>f.lid==Lid&&(fdel||!f.hid||h.flags.includes(f.n))).map(f=>`<button class="chip ${fdel?"":h.flags.includes(f.n)?"on":""}" ${fdel?(f.hid?'style="opacity:.45;text-decoration:line-through"':'style="border-color:#dc2626;color:#dc2626"'):""} data-f="${f.i}">${f.em} ${f.n}</button>`).join("")+`<button class="chip" data-af="${Lid}">＋追加</button><button class="chip" data-fd="1">${fdel?"完了":"🗑 ゴミ箱"}</button>${fdel&&S.flags.some(f=>f[2]&&f[3]==Lid)?`<button class="chip" data-fx="${Lid}" style="border-color:#dc2626;color:#dc2626">ゴミ箱を空にする</button>`:""}</div>`});
+ [...new Set(ONL().map(l=>FG(l.id)))].forEach(Lid=>{o+=`<h3>${esc(ONL().filter(l=>FG(l.id)==Lid).map(l=>l.name).join("＋"))}のフラグ${fdel?"：ゴミ箱に入れるものをタップ（家の記録は消えません。もう一度タップで戻せます）":"（タップで付け外し）"}</h3><div class="row">`+S.flags.map(([n,em,hid,lid],i)=>({n,em,hid,lid,i})).filter(f=>f.lid==Lid&&(fdel||!f.hid||h.flags.includes(f.n))).map(f=>`<button class="chip ${fdel?"":h.flags.includes(f.n)?"on":""}" ${fdel?(f.hid?'style="opacity:.45;text-decoration:line-through"':'style="border-color:#dc2626;color:#dc2626"'):""} data-f="${f.i}">${f.em} ${f.n}</button>`).join("")+`<button class="chip" data-af="${Lid}">＋追加</button><button class="chip" data-fd="1">${fdel?"完了":"🗑 ゴミ箱"}</button>${fdel&&S.flags.some(f=>f[2]&&f[3]==Lid)?`<button class="chip" data-fx="${Lid}" style="border-color:#dc2626;color:#dc2626">ゴミ箱を空にする</button>`:""}</div>`});
  if(!S.layers.some(l=>l.on))o+=`<div style="color:var(--mut);font-size:13px;margin-top:10px">レイヤーがすべて非表示です。上のレイヤーをオンにすると記録項目が出ます。</div>`;
  const sv=on("visit")||h.visits.length;if(sv||(on("apt")&&S.del.some(d=>d.hid==h.id)))o+=`<h3>${sv?`訪問履歴　${h.visits.length}回${streak(h)?`・不在${streak(h)}回連続`:""}`:"削除した履歴"}</h3><div class="hist">`+(!sv?"":h.visits.length?h.visits.map((v,i)=>({v,i})).reverse().map(q=>`<div style="display:flex;justify-content:space-between;align-items:center"><span>${fmt(q.v.t)}　${esc(q.v.r)}</span><button class="x" style="font-size:16px" data-hd="${q.i}" aria-label="この履歴を削除">🗑</button></div>`).join(""):`<div style="color:var(--mut)">まだ記録なし</div>`)+S.del.filter(d=>d.hid==h.id).slice(-5).reverse().map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--mut)"><span>${esc(d.msg)}</span><button class="chip" data-hu="${S.del.indexOf(d)}">元に戻す</button></div>`).join("")+(S.del.some(d=>d.hid==h.id)?`<div style="font-size:12px;color:var(--mut);margin-top:8px">⚠ 削除した履歴は、元に戻せるように、このブラウザに7日間残ります（最大50件）。7日たつと自動で完全に消えます。<button class="chip" data-hx="1" style="margin-left:6px;padding:3px 10px;font-size:12px;color:#dc2626;border-color:#dc2626">今すぐ完全に消す</button></div>`:"")+`</div>`+(h.visits.length>1?`<button class="del" data-ha="1">履歴をすべて消す</button>`:"");
  o+=`<h3>メモ（個人名や子どもの情報は書かない）</h3><textarea id="memo" rows="2">${h.memo.replace(/</g,"&lt;")}</textarea>`;
  if(!h.isNew)o+=`<button class="del" id="del">この訪問先を削除</button>`;
  sheet.innerHTML=o;sheet.style.display="block";
- const keep=()=>{if(h.isNew){delete h.isNew;S.houses.push(h)}h.memo=$("memo").value;save();draw()};
- $("cl").onclick=()=>{if(h.isNew&&!h.apt&&!h.visits.length&&!Object.keys(h.survey).length&&!h.flags.length&&!$("memo").value){sheet.style.display="none";sel=null;draw();return}keep();sheet.style.display="none";sel=null;draw()};
+ if(h.isNew&&!h.addr&&!h.rg){h.rg=1;fetch("https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat="+h.lat+"&lon="+h.lng).then(r=>r.json()).then(j=>{const t=j&&j.results&&j.results.lv01Nm;if(t&&sel===h&&$("addr")&&!$("addr").value){$("addr").value=t;h.rgv=t}}).catch(()=>{})}
+ const keep=()=>{if(h.isNew){delete h.isNew;S.houses.push(h)}h.memo=$("memo").value;if($("addr"))h.addr=$("addr").value.trim();save();draw()};
+ $("cl").onclick=()=>{if(h.isNew&&!h.apt&&!h.visits.length&&!Object.keys(h.survey).length&&!h.flags.length&&!$("memo").value&&(!$("addr").value||$("addr").value==h.rgv)){sheet.style.display="none";sel=null;draw();return}keep();sheet.style.display="none";sel=null;draw()};
  sheet.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const r=S.res[b.dataset.r];if(rdel){r[2]=!r[2];keep();open();return}h.visits.push({t:Date.now(),r:r[0]});if(!lays(h).includes("visit"))h.lay.push("visit");keep();open()});
  if($("rd"))$("rd").onclick=()=>{rdel=!rdel;keep();open()};
  if($("rm3"))$("rm3").onclick=()=>{keep();openResults()};
@@ -187,13 +252,15 @@ function open(){const h=sel;S.del=S.del.filter(d=>d.at>Date.now()-6048e5);let o=
 const bindAok=()=>{$("aok").onclick=()=>{const mx=parseInt($("amax").value,10),f0=parseInt($("af0").value,10)||1,per=mx%100,f1=Math.floor(mx/100),m=$("amsg");m.style.color="#dc2626";
    if(!mx||per<1||f1<1){m.textContent="最大の部屋番号は、「609」のように、階＋2桁の部屋番号で入力してください。";return}
    if(f0<1||f0>f1){m.textContent="最初の階は、1以上で、最大の階以下にしてください。";return}
-   if((f1-f0+1)*per>400){m.textContent="部屋が多すぎます（400室まで）。";return}
-   h.apt={f0,f1,per};h.rooms=h.rooms||{};if(!lays(h).includes("apt"))h.lay.push("apt");roomSel=null;keep();open()}};
+   const ex=[4,9].filter(d=>$("ex"+d)&&$("ex"+d).checked);if((f1-f0+1)*per>400){m.textContent="部屋が多すぎます（400室まで）。";return}
+   if(!aptRooms({apt:{f0,f1,per,ex}}).some(([f,r])=>r.length)){m.textContent="除いたあとに、部屋が1つも残りません。";return}
+   h.apt={f0,f1,per,ex};h.rooms=h.rooms||{};if(!lays(h).includes("apt"))h.lay.push("apt");roomSel=null;keep();open()}};
  if($("aok"))bindAok();
  if($("mkapt"))$("mkapt").onclick=()=>{const b=$("mkapt");b.style.display="none";b.parentNode.insertAdjacentHTML("afterend",aptForm());bindAok()};
  if($("noapt"))$("noapt").onclick=()=>{const b=$("noapt");if(!b.dataset.ok){b.dataset.ok=1;b.textContent="もう一度押すと、部屋の記録がすべて消えます";return}delete h.apt;delete h.rooms;h.lay=lays(h).filter(x=>x!="apt");if(!h.lay.length)h.lay.push("visit");roomSel=null;keep();open()};
  sheet.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{roomSel=b.dataset.rm;keep();open()});
  if($("rb"))$("rb").onclick=()=>{roomSel=null;keep();open()};
+ if(!rdel)reorderRes("data-r");reorderRes("data-rr");
  sheet.querySelectorAll("[data-rr]").forEach(b=>b.onclick=()=>{const r=S.res[b.dataset.rr];h.rooms=h.rooms||{};(h.rooms[roomSel]=h.rooms[roomSel]||{visits:[],memo:""}).visits.push({t:Date.now(),r:r[0]});if(!lays(h).includes("apt"))h.lay.push("apt");roomSel=null;keep();open()});
  sheet.querySelectorAll("[data-rd]").forEach(b=>b.onclick=()=>{const i=+b.dataset.rd,R=h.rooms[roomSel],v=R.visits[i];S.del.push({at:Date.now(),hid:h.id,rm:roomSel,items:[v],msg:roomSel+"号室 "+fmt(v.t)+" "+v.r+"を削除"});if(S.del.length>50)S.del.shift();R.visits.splice(i,1);keep();open()});
  if($("rmemo"))$("rmemo").oninput=()=>{h.rooms=h.rooms||{};(h.rooms[roomSel]=h.rooms[roomSel]||{visits:[],memo:""}).memo=$("rmemo").value;save()};
@@ -289,7 +356,7 @@ function fbLabel(){const n=filt.flags.length+filt.items.length+filt.res.length;$
 function openFilter(){
  let o=`<div class="top"><b>絞り込み</b><button class="x" id="cl">×</button></div><div style="font-size:12px;color:var(--mut)">選んだ条件に合う家だけを地図に出します。フラグと項目は「すべて付いている家」、訪問結果は「最新の結果がどれか」で絞ります。</div>`;
  o+=`<h3>訪問結果（最新の結果）</h3><div class="row">`+S.res.filter(r=>!r[2]).map(r=>`<button class="chip res ${filt.res.includes(r[0])?"on":""}" style="border-left-color:${r[1]}" data-fr="${esc(r[0])}">${esc(r[0])}</button>`).join("")+`</div>`;
- CL().forEach(L=>{const fs=S.flags.filter(f=>f[3]==L.id&&!f[2]),is=L.id=="visit"||L.id=="apt"?[]:S.sv.filter(g=>g.l==L.id&&!g.hid);if(!fs.length&&!is.length)return;o+=`<h3>${esc(L.name)}</h3><div class="row">`+fs.map(f=>`<button class="chip ${filt.flags.includes(f[0])?"on":""}" data-ff="${esc(f[0])}">${f[1]} ${esc(f[0])}</button>`).join("")+is.map(g=>`<button class="chip ${filt.items.includes(g.n)?"on":""}" style="border-left:8px solid ${g.c}" data-fi="${esc(g.n)}">${esc(g.n)}</button>`).join("")+`</div>`});
+ CL().forEach(L=>{if(L.id=="apt")return;const fs=S.flags.filter(f=>f[3]==L.id&&!f[2]),is=L.id=="visit"||L.id=="apt"?[]:S.sv.filter(g=>g.l==L.id&&!g.hid);if(!fs.length&&!is.length)return;o+=`<h3>${esc(L.name)}</h3><div class="row">`+fs.map(f=>`<button class="chip ${filt.flags.includes(f[0])?"on":""}" data-ff="${esc(f[0])}">${f[1]} ${esc(f[0])}</button>`).join("")+is.map(g=>`<button class="chip ${filt.items.includes(g.n)?"on":""}" style="border-left:8px solid ${g.c}" data-fi="${esc(g.n)}">${esc(g.n)}</button>`).join("")+`</div>`});
  o+=`<div class="row" style="margin-top:14px"><button class="chip" id="fclr">条件をすべて解除</button></div>`;
  sheet.innerHTML=o;sheet.style.display="block";
  const tg=(a,v)=>{const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);draw();fbLabel();openFilter()};
@@ -307,7 +374,7 @@ function locate(){
  follow=true;locLabel();toast("現在地を取得しています…（位置情報の許可を求められたら「許可」を選んでください）",5000);
  if(me){c={...me};draw()}
  if(watchId!==null)return;
- try{watchId=navigator.geolocation.watchPosition(p=>{const first=!me;me={lat:p.coords.latitude,lng:p.coords.longitude};acc=p.coords.accuracy||0;if(follow)c={...me};if(first)$("toast").style.display="none";locLabel();draw()},e=>{
+ try{watchId=navigator.geolocation.watchPosition(p=>{const first=!me;me={lat:p.coords.latitude,lng:p.coords.longitude};acc=p.coords.accuracy||0;if(follow)c={...me};{const hd=p.coords.heading,sp=p.coords.speed;if(S.hm=="h"&&follow&&hd!=null&&!isNaN(hd)&&(sp==null||sp>0.8)){const d=((-hd-rot+540)%360)-180;rot=rot+d*0.4;rot=((rot+180)%360+360)%360-180}}if(first)$("toast").style.display="none";locLabel();draw()},e=>{
   if(e&&e.code==3){toast("位置がまだ取れていません。屋外や窓の近くで、もう少しお待ちください。",6000);return}
   watchId=null;follow=false;locLabel();
   toast(e&&e.code==1?"位置情報が許可されていません。ブラウザのアドレスバー付近、または設定の「サイトの権限」から、位置情報を許可してください。このページ（Claudeアプリ内など）では許可が出せない場合があります。":"現在地を取得できませんでした。端末の位置情報（GPS）がオンか確認してください。",14000)
@@ -315,6 +382,7 @@ function locate(){
 const zoom=f=>{sc=Math.max(0.04,Math.min(12,sc*f));draw()};
 $("zi").onclick=()=>zoom(1.6);$("zo").onclick=()=>zoom(1/1.6);
 map.addEventListener("wheel",e=>{e.preventDefault();zoom(e.deltaY<0?1.25:0.8)},{passive:false});
+$("cmp").onclick=()=>{S.hm=S.hm=="h"?"n":"h";try{localStorage.setItem("houmon",JSON.stringify(S))}catch(e){}draw();toast(S.hm=="h"?"「進行方向が上」にしました。現在地を追いかけている間、進む向きが上になります。":"「北が上」に固定しました。",3500)};
 $("off").onclick=()=>{if(me){c={...me};follow=true;locLabel();draw()}};
 $("loc").onclick=locate;if(S.houses.length)c={lat:S.houses[0].lat,lng:S.houses[0].lng};
 const urGo=d=>{const k=HI+d;if(k<0||k>=HS.length)return;HI=k;S=JSON.parse(HS[HI]);try{localStorage.setItem("houmon",HS[HI])}catch(e){}sheet.style.display="none";sel=null;roomSel=null;renderHd();draw();urUp();toast(d<0?"1つ前に戻しました":"1つ先に進みました",1500)};
